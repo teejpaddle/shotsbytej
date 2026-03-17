@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Shots By Tej — SBT</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&family=Playfair+Display:ital@1&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --black: #080808; --white: #f5f2ee;
+    --gold: #c9a84c; --gold-light: #e8c97a;
+    --gray: #888880; --dark-gray: #1a1a18; --nav-h: 72px;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--black); color: var(--white); font-family: 'DM Sans', sans-serif; font-weight: 300; overflow: hidden; height: 100vh; cursor: none; }
+
+  #cursor { position: fixed; width: 10px; height: 10px; background: var(--gold); border-radius: 50%; pointer-events: none; z-index: 9999; transform: translate(-50%,-50%); transition: width .2s, height .2s; mix-blend-mode: difference; }
+  #cursor-ring { position: fixed; width: 36px; height: 36px; border: 1px solid rgba(201,168,76,.5); border-radius: 50%; pointer-events: none; z-index: 9998; transform: translate(-50%,-50%); }
+  body:has(a:hover) #cursor, body:has(button:hover) #cursor { width: 20px; height: 20px; }
+
+  nav { position: fixed; top: 0; left: 0; right: 0; height: var(--nav-h); display: flex; align-items: center; justify-content: space-between; padding: 0 40px; z-index: 1000; transition: background .4s; }
+  nav.scrolled { background: rgba(8,8,8,.92); backdrop-filter: blur(12px); }
+  .nav-logo { font-family: 'Bebas Neue', sans-serif; font-size: 28px; letter-spacing: 4px; color: var(--white); text-decoration: none; }
+  .nav-logo span { color: var(--gold); }
+  .nav-links { display: flex; gap: 36px; list-style: none; }
+  .nav-links a { text-decoration: none; color: var(--white); font-size: 13px; letter-spacing: 2px; text-transform: uppercase; opacity: .7; transition: opacity .2s, color .2s; position: relative; }
+  .nav-links a::after { content: ''; position: absolute; bottom: -4px; left: 0; width: 0; height: 1px; background: var(--gold); transition: width .3s; }
+  .nav-links a:hover, .nav-links a.active { opacity: 1; color: var(--gold); }
+  .nav-links a:hover::after, .nav-links a.active::after { width: 100%; }
+  .nav-hamburger { display: none; flex-direction: column; gap: 5px; cursor: pointer; padding: 4px; }
+  .nav-hamburger span { display: block; width: 24px; height: 1px; background: var(--white); }
+
+  .mobile-menu { display: none; position: fixed; inset: 0; background: var(--black); z-index: 999; flex-direction: column; align-items: center; justify-content: center; gap: 40px; }
+  .mobile-menu.open { display: flex; }
+  .mobile-menu a { font-family: 'Bebas Neue', sans-serif; font-size: 48px; letter-spacing: 6px; color: var(--white); text-decoration: none; transition: color .2s; }
+  .mobile-menu a:hover { color: var(--gold); }
+  .mobile-close { position: absolute; top: 28px; right: 40px; font-size: 32px; color: var(--gray); cursor: pointer; background: none; border: none; }
+
+  #home { position: relative; height: 100vh; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+  #photo-canvas { position: absolute; inset: 0; width: 100%; height: 100%; overflow: hidden; }
+
+  .draggable-photo { position: absolute; cursor: grab; border-radius: 2px; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,.7); transition: box-shadow .2s; user-select: none; will-change: transform; }
+  .draggable-photo:active { cursor: grabbing; }
+  .draggable-photo .photo-label { position: absolute; bottom: 0; left: 0; right: 0; padding: 12px 14px 10px; background: linear-gradient(transparent,rgba(0,0,0,.7)); font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: rgba(255,255,255,.6); opacity: 0; transition: opacity .3s; }
+  .draggable-photo:hover .photo-label { opacity: 1; }
+  .photo-placeholder { width: 100%; height: 100%; background: var(--dark-gray); display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 8px; color: var(--gray); font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; }
+  .photo-placeholder svg { opacity: .3; }
+
+  .hero-center { position: relative; z-index: 10; text-align: center; pointer-events: none; }
+  .hero-eyebrow { font-size: 11px; letter-spacing: 5px; text-transform: uppercase; color: var(--gold); margin-bottom: 16px; opacity: 0; animation: fadeUp .8s .3s forwards; }
+  .hero-title { font-family: 'Bebas Neue', sans-serif; font-size: clamp(72px,14vw,180px); line-height: .9; letter-spacing: 6px; color: var(--white); opacity: 0; animation: fadeUp .8s .5s forwards; mix-blend-mode: difference; filter: drop-shadow(0 0 40px rgba(0,0,0,.8)); }
+  .hero-title span { color: var(--gold); }
+  .hero-sub { font-size: 13px; letter-spacing: 3px; text-transform: uppercase; color: var(--gray); margin-top: 20px; opacity: 0; animation: fadeUp .8s .7s forwards; }
+  .hero-cta { margin-top: 40px; pointer-events: all; opacity: 0; animation: fadeUp .8s .9s forwards; }
+  .btn-outline { display: inline-block; padding: 14px 36px; border: 1px solid var(--gold); color: var(--gold); font-size: 11px; letter-spacing: 3px; text-transform: uppercase; text-decoration: none; cursor: pointer; background: transparent; transition: background .3s, color .3s; font-family: 'DM Sans', sans-serif; }
+  .btn-outline:hover { background: var(--gold); color: var(--black); }
+
+  /* Centered drag hint */
+  .drag-hint { position: absolute; bottom: 30px; left: 0; right: 0; display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 10px; letter-spacing: 3px; text-transform: uppercase; color: var(--gray); z-index: 10; white-space: nowrap; pointer-events: none; opacity: 0; animation: fadeUp .6s 1.4s forwards; }
+  .drag-hint::before, .drag-hint::after { content: ''; display: block; width: 30px; height: 1px; background: var(--gray); }
+
+  .grain { position: fixed; inset: 0; pointer-events: none; z-index: 9990; opacity: .04; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E"); background-size: 200px; }
+
+  @keyframes fadeUp { from { opacity:0; transform:translateY(24px); } to { opacity:1; transform:translateY(0); } }
+  @keyframes floatIn { from { opacity:0; transform:scale(.85) translateY(20px); } to { opacity:1; } }
+
+  @media (max-width: 900px) { nav { padding: 0 24px; } .nav-links { display: none; } .nav-hamburger { display: flex; } }
+  @media (max-width: 600px) { .hero-title { letter-spacing: 2px; } }
+</style>
+</head>
+<body>
+<div class="grain"></div>
+<div id="cursor"></div>
+<div id="cursor-ring"></div>
+
+<nav id="main-nav">
+  <a class="nav-logo" href="index.html">SB<span>T</span></a>
+  <ul class="nav-links">
+    <li><a href="index.html" class="active">Home</a></li>
+    <li><a href="pages/portfolio.html">Portfolio</a></li>
+    <li><a href="pages/services.html">Services</a></li>
+    <li><a href="pages/contact.html">Contact</a></li>
+  </ul>
+  <div class="nav-hamburger" id="hamburger"><span></span><span></span><span></span></div>
+</nav>
+
+<div class="mobile-menu" id="mobile-menu">
+  <button class="mobile-close" id="mob-close">✕</button>
+  <a href="index.html">Home</a>
+  <a href="pages/portfolio.html">Portfolio</a>
+  <a href="pages/services.html">Services</a>
+  <a href="pages/contact.html">Contact</a>
+</div>
+
+<div id="home">
+  <div id="photo-canvas"></div>
+  <div class="hero-center">
+    <p class="hero-eyebrow">Photography &amp; Videography</p>
+    <h1 class="hero-title">SHOTS<br>BY <span>TEJ</span></h1>
+    <p class="hero-sub">Youth &amp; Professional Sports Coverage</p>
+    <div class="hero-cta"><a class="btn-outline" href="pages/portfolio.html">View Portfolio</a></div>
+  </div>
+  <p class="drag-hint">Drag the photos to explore</p>
+</div>
+
+<script>
+// Cursor
+const cur = document.getElementById('cursor'), ring = document.getElementById('cursor-ring');
+let rx=0,ry=0,mx=window.innerWidth/2,my=window.innerHeight/2;
+document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;cur.style.left=mx+'px';cur.style.top=my+'px';});
+(function a(){rx+=(mx-rx)*.12;ry+=(my-ry)*.12;ring.style.left=rx+'px';ring.style.top=ry+'px';requestAnimationFrame(a);})();
+if('ontouchstart'in window){cur.style.display='none';ring.style.display='none';document.body.style.cursor='auto';}
+
+// Nav
+window.addEventListener('scroll',()=>document.getElementById('main-nav').classList.toggle('scrolled',window.scrollY>20));
+document.getElementById('hamburger').addEventListener('click',()=>document.getElementById('mobile-menu').classList.toggle('open'));
+document.getElementById('mob-close').addEventListener('click',()=>document.getElementById('mobile-menu').classList.remove('open'));
+
+// Draggable photos
+const photos=[
+  {w:260,h:180,label:'Basketball Coverage',cat:'Basketball'},
+  {w:200,h:260,label:'Player Portrait',cat:'Portrait'},
+  {w:230,h:170,label:'Soccer Action',cat:'Soccer'},
+  {w:180,h:240,label:'Football Friday Night',cat:'Football'},
+  {w:280,h:190,label:'Tournament Highlight',cat:'Tournament'},
+  {w:210,h:160,label:'Baseball Travel Ball',cat:'Baseball'},
+  {w:160,h:220,label:'Youth League',cat:'Youth'},
+];
+
+let dragEl=null,dox=0,doy=0,dlx=0,dvel=0,dBase=0,dCur=0;
+
+function buildCanvas(){
+  const canvas=document.getElementById('photo-canvas');
+  canvas.innerHTML='';
+  const W=window.innerWidth,H=window.innerHeight;
+  const pos=[{x:W*.04,y:H*.10},{x:W*.72,y:H*.06},{x:W*.78,y:H*.55},{x:W*.02,y:H*.55},{x:W*.30,y:H*.72},{x:W*.58,y:H*.68},{x:W*.15,y:H*.28}];
+  const rots=[-8,6,-4,9,-6,3,-10];
+  photos.forEach((p,i)=>{
+    const el=document.createElement('div');
+    el.className='draggable-photo';
+    el.style.cssText=`width:${p.w}px;height:${p.h}px;left:${pos[i].x}px;top:${pos[i].y}px;transform:rotate(${rots[i]}deg);z-index:${i+1};animation:floatIn .7s ${i*.1}s both;`;
+    el.innerHTML=`<div class="photo-placeholder"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><rect x="3" y="3" width="18" height="18" rx="1"/><circle cx="12" cy="12" r="4"/><path d="M3 12h4M17 12h4M12 3v4M12 17v4"/></svg><span>${p.cat}</span></div><div class="photo-label">${p.label}</div>`;
+    const br=rots[i];
+    el.addEventListener('mousedown',e=>{e.preventDefault();dragEl=el;dBase=br;dCur=br;dox=e.clientX-el.offsetLeft;doy=e.clientY-el.offsetTop;dlx=e.clientX;el.style.zIndex=50;el.style.transition='box-shadow .2s';});
+    el.addEventListener('touchstart',e=>{e.preventDefault();const t=e.touches[0];dragEl=el;dBase=br;dCur=br;dox=t.clientX-el.offsetLeft;doy=t.clientY-el.offsetTop;dlx=t.clientX;el.style.zIndex=50;},{passive:false});
+    canvas.appendChild(el);
+  });
+}
+
+window.addEventListener('mousemove',e=>{if(!dragEl)return;dvel=e.clientX-dlx;dlx=e.clientX;dCur=dBase+dvel*.5;dragEl.style.left=(e.clientX-dox)+'px';dragEl.style.top=(e.clientY-doy)+'px';dragEl.style.transform=`rotate(${dCur}deg) scale(1.04)`;dragEl.style.transition='box-shadow .2s,transform .05s';});
+window.addEventListener('touchmove',e=>{if(!dragEl)return;e.preventDefault();const t=e.touches[0];dvel=t.clientX-dlx;dlx=t.clientX;dCur=dBase+dvel*.5;dragEl.style.left=(t.clientX-dox)+'px';dragEl.style.top=(t.clientY-doy)+'px';dragEl.style.transform=`rotate(${dCur}deg) scale(1.04)`;},{passive:false});
+function endDrag(){if(!dragEl)return;dragEl.style.transform=`rotate(${dCur}deg) scale(1)`;dragEl.style.transition='box-shadow .2s,transform .4s cubic-bezier(.2,0,.1,1)';dragEl.style.zIndex='';dragEl=null;}
+window.addEventListener('mouseup',endDrag);
+window.addEventListener('touchend',endDrag);
+
+buildCanvas();
+window.addEventListener('resize',buildCanvas);
+</script>
+</body>
+</html>
