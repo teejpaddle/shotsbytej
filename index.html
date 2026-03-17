@@ -1,0 +1,1579 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Shots By Tej — SBT</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&family=Playfair+Display:ital@1&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --black: #080808;
+    --white: #f5f2ee;
+    --cream: #e8e2d9;
+    --gold: #c9a84c;
+    --gold-light: #e8c97a;
+    --gray: #888880;
+    --dark-gray: #1a1a18;
+    --nav-h: 72px;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--black);
+    color: var(--white);
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 300;
+    overflow-x: hidden;
+    cursor: none;
+  }
+
+  /* ── Custom Cursor ── */
+  #cursor {
+    position: fixed;
+    width: 10px; height: 10px;
+    background: var(--gold);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 9999;
+    transform: translate(-50%, -50%);
+    transition: width .2s, height .2s, background .2s;
+    mix-blend-mode: difference;
+  }
+  #cursor-ring {
+    position: fixed;
+    width: 36px; height: 36px;
+    border: 1px solid rgba(201,168,76,.5);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 9998;
+    transform: translate(-50%, -50%);
+    transition: transform .12s ease, width .3s, height .3s, border-color .3s;
+  }
+  body:has(a:hover) #cursor, body:has(button:hover) #cursor { width: 20px; height: 20px; }
+
+  /* ── Navigation ── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0;
+    height: var(--nav-h);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 40px;
+    z-index: 1000;
+    transition: background .4s;
+  }
+  nav.scrolled { background: rgba(8,8,8,.92); backdrop-filter: blur(12px); }
+
+  .nav-logo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 28px;
+    letter-spacing: 4px;
+    color: var(--white);
+    text-decoration: none;
+  }
+  .nav-logo span { color: var(--gold); }
+
+  .nav-links { display: flex; gap: 36px; list-style: none; }
+  .nav-links a {
+    text-decoration: none;
+    color: var(--white);
+    font-size: 13px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    opacity: .7;
+    transition: opacity .2s, color .2s;
+    position: relative;
+  }
+  .nav-links a::after {
+    content: '';
+    position: absolute; bottom: -4px; left: 0;
+    width: 0; height: 1px;
+    background: var(--gold);
+    transition: width .3s;
+  }
+  .nav-links a:hover, .nav-links a.active { opacity: 1; color: var(--gold); }
+  .nav-links a:hover::after, .nav-links a.active::after { width: 100%; }
+
+  .nav-hamburger { display: none; flex-direction: column; gap: 5px; cursor: pointer; padding: 4px; }
+  .nav-hamburger span { display: block; width: 24px; height: 1px; background: var(--white); transition: .3s; }
+
+  /* Mobile nav */
+  .mobile-menu {
+    display: none;
+    position: fixed; inset: 0;
+    background: var(--black);
+    z-index: 999;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 40px;
+  }
+  .mobile-menu.open { display: flex; }
+  .mobile-menu a {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 48px;
+    letter-spacing: 6px;
+    color: var(--white);
+    text-decoration: none;
+    transition: color .2s;
+  }
+  .mobile-menu a:hover { color: var(--gold); }
+  .mobile-close {
+    position: absolute; top: 28px; right: 40px;
+    font-size: 32px; color: var(--gray); cursor: pointer;
+    background: none; border: none;
+  }
+
+  /* ── Pages ── */
+  .page { display: none; min-height: 100vh; }
+  .page.active { display: block; }
+
+  /* ═══════════════════════════════════════
+     HOME PAGE
+  ═══════════════════════════════════════ */
+  #home {
+    position: relative;
+    height: 100vh;
+    overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  /* Canvas for draggable photos */
+  #photo-canvas {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+    overflow: hidden;
+  }
+
+  .draggable-photo {
+    position: absolute;
+    cursor: grab;
+    border-radius: 2px;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0,0,0,.7);
+    transition: box-shadow .2s, transform .2s;
+    user-select: none;
+    will-change: transform;
+  }
+  .draggable-photo:active { cursor: grabbing; box-shadow: 0 40px 100px rgba(0,0,0,.9); }
+  .draggable-photo img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    display: block;
+    pointer-events: none;
+    filter: grayscale(20%);
+    transition: filter .3s;
+  }
+  .draggable-photo:hover img { filter: grayscale(0%); }
+  .draggable-photo .photo-label {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    padding: 12px 14px 10px;
+    background: linear-gradient(transparent, rgba(0,0,0,.7));
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,.6);
+    opacity: 0;
+    transition: opacity .3s;
+  }
+  .draggable-photo:hover .photo-label { opacity: 1; }
+
+  /* Floating placeholder image */
+  .photo-placeholder {
+    width: 100%; height: 100%;
+    background: var(--dark-gray);
+    display: flex; align-items: center; justify-content: center;
+    flex-direction: column;
+    gap: 8px;
+    color: var(--gray);
+    font-size: 11px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+  }
+  .photo-placeholder svg { opacity: .3; }
+
+  /* Hero text overlay */
+  .hero-center {
+    position: relative; z-index: 10;
+    text-align: center;
+    pointer-events: none;
+  }
+  .hero-eyebrow {
+    font-size: 11px;
+    letter-spacing: 5px;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 16px;
+    opacity: 0;
+    animation: fadeUp .8s .3s forwards;
+  }
+  .hero-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(72px, 14vw, 180px);
+    line-height: .9;
+    letter-spacing: 6px;
+    color: var(--white);
+    opacity: 0;
+    animation: fadeUp .8s .5s forwards;
+    mix-blend-mode: difference;
+    filter: drop-shadow(0 0 40px rgba(0,0,0,.8));
+  }
+  .hero-title span { color: var(--gold); }
+  .hero-sub {
+    font-size: 13px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--gray);
+    margin-top: 20px;
+    opacity: 0;
+    animation: fadeUp .8s .7s forwards;
+  }
+  .hero-cta {
+    margin-top: 40px;
+    pointer-events: all;
+    opacity: 0;
+    animation: fadeUp .8s .9s forwards;
+  }
+  .btn-outline {
+    display: inline-block;
+    padding: 14px 36px;
+    border: 1px solid var(--gold);
+    color: var(--gold);
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    text-decoration: none;
+    cursor: pointer;
+    background: transparent;
+    transition: background .3s, color .3s;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .btn-outline:hover { background: var(--gold); color: var(--black); }
+
+  /* Hint text */
+  .drag-hint {
+    position: absolute;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 10px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--gray);
+    z-index: 10;
+    opacity: 0;
+    animation: fadeUp .6s 1.4s forwards;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .drag-hint::before, .drag-hint::after {
+    content: ''; display: block;
+    width: 30px; height: 1px;
+    background: var(--gray);
+  }
+
+  /* Grain overlay */
+  .grain {
+    position: fixed; inset: 0;
+    pointer-events: none; z-index: 9990;
+    opacity: .04;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+    background-size: 200px;
+  }
+
+  /* ═══════════════════════════════════════
+     PORTFOLIO PAGE
+  ═══════════════════════════════════════ */
+  #portfolio { padding-top: var(--nav-h); }
+
+  .page-header {
+    padding: 80px 40px 60px;
+    border-bottom: 1px solid rgba(255,255,255,.06);
+  }
+  .page-header-inner { max-width: 1200px; margin: 0 auto; }
+  .page-eyebrow {
+    font-size: 11px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 16px;
+  }
+  .page-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(48px, 8vw, 96px);
+    letter-spacing: 4px;
+    line-height: 1;
+  }
+  .page-title-italic {
+    font-family: 'Playfair Display', serif;
+    font-style: italic;
+    font-size: clamp(32px, 5vw, 64px);
+    color: var(--gold);
+    margin-left: 12px;
+  }
+
+  /* Filter tabs */
+  .portfolio-filters {
+    display: flex;
+    gap: 0;
+    padding: 32px 40px;
+    max-width: 1280px;
+    margin: 0 auto;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .portfolio-filters::-webkit-scrollbar { display: none; }
+  .filter-btn {
+    padding: 10px 28px;
+    border: 1px solid rgba(255,255,255,.1);
+    border-right: none;
+    background: transparent;
+    color: var(--gray);
+    font-size: 11px;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    white-space: nowrap;
+    transition: background .2s, color .2s;
+  }
+  .filter-btn:last-child { border-right: 1px solid rgba(255,255,255,.1); }
+  .filter-btn.active, .filter-btn:hover {
+    background: var(--gold);
+    color: var(--black);
+    border-color: var(--gold);
+  }
+  .filter-btn.active + .filter-btn { border-left-color: var(--gold); }
+
+  /* Grid */
+  .portfolio-grid {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap: 3px;
+    padding: 3px;
+    max-width: 1600px;
+    margin: 0 auto;
+  }
+
+  .portfolio-item {
+    position: relative;
+    overflow: hidden;
+    background: var(--dark-gray);
+    cursor: pointer;
+  }
+  .portfolio-item:nth-child(1) { grid-column: span 8; }
+  .portfolio-item:nth-child(2) { grid-column: span 4; }
+  .portfolio-item:nth-child(3) { grid-column: span 4; }
+  .portfolio-item:nth-child(4) { grid-column: span 4; }
+  .portfolio-item:nth-child(5) { grid-column: span 4; }
+  .portfolio-item:nth-child(6) { grid-column: span 6; }
+  .portfolio-item:nth-child(7) { grid-column: span 6; }
+  .portfolio-item:nth-child(8) { grid-column: span 3; }
+  .portfolio-item:nth-child(9) { grid-column: span 5; }
+  .portfolio-item:nth-child(10) { grid-column: span 4; }
+  .portfolio-item:nth-child(11) { grid-column: span 4; }
+  .portfolio-item:nth-child(12) { grid-column: span 4; }
+
+  .portfolio-item .aspect {
+    aspect-ratio: 4/3;
+    width: 100%;
+  }
+  .portfolio-item:nth-child(1) .aspect { aspect-ratio: 16/9; }
+  .portfolio-item:nth-child(6) .aspect,
+  .portfolio-item:nth-child(7) .aspect { aspect-ratio: 3/2; }
+
+  .portfolio-item img,
+  .portfolio-item .p-placeholder {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform .6s cubic-bezier(.2,0,.1,1), filter .4s;
+    filter: grayscale(15%);
+  }
+  .portfolio-item .p-placeholder {
+    display: flex; align-items: center; justify-content: center;
+    flex-direction: column; gap: 10px;
+    color: var(--gray);
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    background: linear-gradient(135deg, #161614 0%, #1f1e1a 100%);
+  }
+  .portfolio-item:hover img,
+  .portfolio-item:hover .p-placeholder { transform: scale(1.04); filter: grayscale(0%); }
+
+  .portfolio-overlay {
+    position: absolute; inset: 0;
+    background: linear-gradient(to top, rgba(0,0,0,.8) 0%, transparent 50%);
+    opacity: 0; transition: opacity .4s;
+    display: flex; align-items: flex-end;
+    padding: 24px;
+  }
+  .portfolio-item:hover .portfolio-overlay { opacity: 1; }
+  .overlay-content .p-tag {
+    font-size: 9px; letter-spacing: 3px; text-transform: uppercase; color: var(--gold); margin-bottom: 6px;
+  }
+  .overlay-content .p-name { font-family: 'Bebas Neue', sans-serif; font-size: 24px; letter-spacing: 2px; }
+  .overlay-content .p-date { font-size: 11px; color: var(--gray); margin-top: 2px; letter-spacing: 1px; }
+
+  /* ═══════════════════════════════════════
+     SERVICES PAGE
+  ═══════════════════════════════════════ */
+  #services { padding-top: var(--nav-h); }
+
+  .services-intro {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 80px 40px 60px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 80px;
+    align-items: end;
+    border-bottom: 1px solid rgba(255,255,255,.06);
+  }
+  .services-intro-text { font-size: 16px; line-height: 1.8; color: var(--gray); max-width: 440px; }
+
+  .services-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+    gap: 1px;
+    background: rgba(255,255,255,.05);
+    margin: 60px 0;
+  }
+
+  .service-card {
+    background: var(--black);
+    padding: 52px 44px;
+    position: relative;
+    overflow: hidden;
+    transition: background .3s;
+  }
+  .service-card::before {
+    content: '';
+    position: absolute; top: 0; left: 0;
+    width: 0; height: 2px;
+    background: var(--gold);
+    transition: width .4s;
+  }
+  .service-card:hover { background: #0f0f0d; }
+  .service-card:hover::before { width: 100%; }
+
+  .service-number {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 80px;
+    color: rgba(255,255,255,.04);
+    line-height: 1;
+    position: absolute; top: 20px; right: 30px;
+    letter-spacing: 2px;
+    pointer-events: none;
+  }
+  .service-icon {
+    width: 48px; height: 48px;
+    margin-bottom: 28px;
+    color: var(--gold);
+    opacity: .8;
+  }
+  .service-name {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 28px;
+    letter-spacing: 3px;
+    margin-bottom: 16px;
+  }
+  .service-desc { font-size: 14px; line-height: 1.8; color: var(--gray); margin-bottom: 28px; }
+  .service-includes { list-style: none; }
+  .service-includes li {
+    font-size: 12px;
+    letter-spacing: 1.5px;
+    color: rgba(255,255,255,.5);
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(255,255,255,.05);
+    display: flex; align-items: center; gap: 10px;
+  }
+  .service-includes li::before {
+    content: ''; display: block;
+    width: 16px; height: 1px;
+    background: var(--gold); flex-shrink: 0;
+  }
+
+  .pricing-section {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 40px 100px;
+  }
+  .pricing-section h2 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 48px;
+    letter-spacing: 4px;
+    margin-bottom: 48px;
+    color: var(--white);
+  }
+  .pricing-table {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 2px;
+  }
+  .pricing-card {
+    border: 1px solid rgba(255,255,255,.08);
+    padding: 40px 32px;
+    position: relative;
+    transition: border-color .3s;
+  }
+  .pricing-card.featured {
+    border-color: var(--gold);
+    background: rgba(201,168,76,.04);
+  }
+  .pricing-card.featured::after {
+    content: 'Most Popular';
+    position: absolute; top: -1px; right: 24px;
+    background: var(--gold);
+    color: var(--black);
+    font-size: 9px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 4px 12px;
+  }
+  .price-tier { font-size: 11px; letter-spacing: 3px; text-transform: uppercase; color: var(--gold); margin-bottom: 16px; }
+  .price-amount { font-family: 'Bebas Neue', sans-serif; font-size: 56px; line-height: 1; margin-bottom: 4px; }
+  .price-amount span { font-size: 20px; vertical-align: super; }
+  .price-note { font-size: 11px; color: var(--gray); margin-bottom: 32px; letter-spacing: 1px; }
+  .price-features { list-style: none; }
+  .price-features li {
+    font-size: 13px;
+    color: rgba(255,255,255,.6);
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(255,255,255,.05);
+    display: flex; align-items: center; gap: 12px;
+  }
+  .price-features li .check { color: var(--gold); font-size: 14px; }
+
+  /* ═══════════════════════════════════════
+     CONTACT PAGE
+  ═══════════════════════════════════════ */
+  #contact { padding-top: var(--nav-h); }
+
+  .contact-layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    min-height: calc(100vh - var(--nav-h));
+  }
+
+  .contact-info {
+    padding: 80px 60px;
+    background: var(--dark-gray);
+    display: flex; flex-direction: column; justify-content: space-between;
+  }
+  .contact-info-top { }
+  .contact-tagline {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(36px, 4vw, 56px);
+    letter-spacing: 3px;
+    line-height: 1.1;
+    margin-top: 24px;
+    margin-bottom: 40px;
+  }
+  .contact-tagline span { color: var(--gold); font-family: 'Playfair Display', serif; font-style: italic; }
+  .contact-detail {
+    display: flex; align-items: flex-start;
+    gap: 16px; margin-bottom: 28px;
+  }
+  .contact-detail-icon { color: var(--gold); margin-top: 2px; flex-shrink: 0; }
+  .contact-detail-label { font-size: 10px; letter-spacing: 2.5px; text-transform: uppercase; color: var(--gray); margin-bottom: 4px; }
+  .contact-detail-value { font-size: 15px; color: var(--white); }
+
+  .contact-social { display: flex; gap: 16px; margin-top: 48px; }
+  .social-link {
+    width: 42px; height: 42px;
+    border: 1px solid rgba(255,255,255,.12);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--gray);
+    text-decoration: none;
+    transition: border-color .2s, color .2s, background .2s;
+  }
+  .social-link:hover { border-color: var(--gold); color: var(--gold); background: rgba(201,168,76,.08); }
+
+  .contact-form-area {
+    padding: 80px 60px;
+    display: flex; flex-direction: column; justify-content: center;
+  }
+  .form-section-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 14px; letter-spacing: 4px;
+    color: var(--gold); margin-bottom: 40px;
+  }
+
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .form-group { margin-bottom: 28px; }
+  .form-group label {
+    display: block;
+    font-size: 10px;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    color: var(--gray);
+    margin-bottom: 10px;
+  }
+  .form-group input,
+  .form-group select,
+  .form-group textarea {
+    width: 100%;
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid rgba(255,255,255,.12);
+    padding: 12px 0;
+    color: var(--white);
+    font-size: 15px;
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 300;
+    outline: none;
+    transition: border-color .3s;
+    -webkit-appearance: none;
+  }
+  .form-group select { cursor: pointer; }
+  .form-group select option { background: #111; }
+  .form-group input:focus,
+  .form-group select:focus,
+  .form-group textarea:focus { border-color: var(--gold); }
+  .form-group textarea { resize: none; height: 100px; }
+
+  .btn-submit {
+    display: inline-flex; align-items: center; gap: 14px;
+    padding: 18px 44px;
+    background: var(--gold);
+    color: var(--black);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    border: none; cursor: pointer;
+    transition: background .3s, transform .2s;
+    font-weight: 500;
+  }
+  .btn-submit:hover { background: var(--gold-light); transform: translateX(4px); }
+  .btn-submit svg { transition: transform .2s; }
+  .btn-submit:hover svg { transform: translateX(4px); }
+
+  /* ═══════════════════════════════════════
+     FOOTER
+  ═══════════════════════════════════════ */
+  footer {
+    padding: 40px;
+    border-top: 1px solid rgba(255,255,255,.06);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 20px;
+  }
+  .footer-logo { font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: 4px; color: var(--white); }
+  .footer-logo span { color: var(--gold); }
+  .footer-copy { font-size: 11px; color: var(--gray); letter-spacing: 1.5px; }
+
+  /* ═══════════════════════════════════════
+     ANIMATIONS
+  ═══════════════════════════════════════ */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ═══════════════════════════════════════
+     RESPONSIVE
+  ═══════════════════════════════════════ */
+  @media (max-width: 900px) {
+    nav { padding: 0 24px; }
+    .nav-links { display: none; }
+    .nav-hamburger { display: flex; }
+
+    .services-intro { grid-template-columns: 1fr; gap: 32px; }
+    .contact-layout { grid-template-columns: 1fr; }
+    .contact-info { padding: 60px 28px 48px; }
+    .contact-form-area { padding: 48px 28px 60px; }
+    .form-row { grid-template-columns: 1fr; }
+
+    .portfolio-item:nth-child(n) { grid-column: span 12; }
+    .portfolio-item:nth-child(1) .aspect,
+    .portfolio-item:nth-child(n) .aspect { aspect-ratio: 4/3; }
+    .portfolio-item:nth-child(2n) { grid-column: span 6; }
+    .portfolio-item:nth-child(3n) { grid-column: span 6; }
+
+    .page-header { padding: 60px 24px 40px; }
+    .portfolio-filters { padding: 24px; }
+    .pricing-section { padding: 0 24px 80px; }
+  }
+
+  @media (max-width: 600px) {
+    .portfolio-item:nth-child(n) { grid-column: span 12; }
+    .hero-title { letter-spacing: 2px; }
+    .contact-info { padding: 48px 20px 40px; }
+    .contact-form-area { padding: 40px 20px 60px; }
+    .services-grid { grid-template-columns: 1fr; }
+    footer { padding: 28px 20px; }
+  }
+
+  /* Scroll animations */
+  .reveal {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity .7s ease, transform .7s ease;
+  }
+  .reveal.visible { opacity: 1; transform: translateY(0); }
+
+  /* Page transitions */
+  .page {
+    animation: none;
+  }
+  .page.page-enter {
+    animation: pageIn .35s ease both;
+  }
+  @keyframes pageIn {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+</style>
+</head>
+<body>
+
+<div class="grain"></div>
+<div id="cursor"></div>
+<div id="cursor-ring"></div>
+
+<!-- ── NAVIGATION ── -->
+<nav id="main-nav">
+  <a class="nav-logo" data-page="home">SB<span>T</span></a>
+  <ul class="nav-links">
+    <li><a data-page="home">Home</a></li>
+    <li><a data-page="portfolio">Portfolio</a></li>
+    <li><a data-page="services">Services</a></li>
+    <li><a data-page="contact">Contact</a></li>
+  </ul>
+  <div class="nav-hamburger" id="hamburger">
+    <span></span><span></span><span></span>
+  </div>
+</nav>
+
+<!-- Mobile Menu -->
+<div class="mobile-menu" id="mobile-menu">
+  <button class="mobile-close" id="mobile-close-btn">✕</button>
+  <a data-page="home">Home</a>
+  <a data-page="portfolio">Portfolio</a>
+  <a data-page="services">Services</a>
+  <a data-page="contact">Contact</a>
+</div>
+
+<!-- ══════════════════════════════════════════
+     HOME PAGE
+══════════════════════════════════════════ -->
+<div class="page active" id="home">
+  <div id="photo-canvas"></div>
+
+  <div class="hero-center">
+    <p class="hero-eyebrow">Photography &amp; Videography</p>
+    <h1 class="hero-title">SHOTS<br>BY <span>TEJ</span></h1>
+    <p class="hero-sub">Youth &amp; Professional Sports Coverage</p>
+    <div class="hero-cta">
+      <button class="btn-outline" data-page="portfolio">View Portfolio</button>
+    </div>
+  </div>
+
+  <p class="drag-hint">Drag the photos to explore</p>
+</div>
+
+<!-- ══════════════════════════════════════════
+     PORTFOLIO PAGE
+══════════════════════════════════════════ -->
+<div class="page" id="portfolio">
+  <div class="page-header">
+    <div class="page-header-inner">
+      <p class="page-eyebrow">Past Work</p>
+      <h1 class="page-title">Portfolio<span class="page-title-italic">& Events</span></h1>
+    </div>
+  </div>
+
+  <div class="portfolio-filters">
+    <button class="filter-btn active" data-filter="all">All Work</button>
+    <button class="filter-btn" data-filter="basketball">Basketball</button>
+    <button class="filter-btn" data-filter="soccer">Soccer</button>
+    <button class="filter-btn" data-filter="football">Football</button>
+    <button class="filter-btn" data-filter="baseball">Baseball</button>
+    <button class="filter-btn" data-filter="video">Video</button>
+  </div>
+
+  <div class="portfolio-grid" id="portfolio-grid">
+
+    <div class="portfolio-item" data-category="basketball">
+      <div class="aspect">
+        <div class="p-placeholder">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><rect x="3" y="3" width="18" height="18" rx="1"/><circle cx="12" cy="12" r="4"/><path d="M3 12h4M17 12h4M12 3v4M12 17v4"/></svg>
+          Replace with image
+        </div>
+      </div>
+      <div class="portfolio-overlay">
+        <div class="overlay-content">
+          <p class="p-tag">Basketball</p>
+          <p class="p-name">State Championship 2024</p>
+          <p class="p-date">Dec 2024</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="portfolio-item" data-category="soccer">
+      <div class="aspect">
+        <div class="p-placeholder">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><rect x="3" y="3" width="18" height="18" rx="1"/><circle cx="12" cy="12" r="4"/></svg>
+          Replace with image
+        </div>
+      </div>
+      <div class="portfolio-overlay">
+        <div class="overlay-content">
+          <p class="p-tag">Soccer</p>
+          <p class="p-name">Youth League Finals</p>
+          <p class="p-date">Nov 2024</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="portfolio-item" data-category="football">
+      <div class="aspect">
+        <div class="p-placeholder">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><rect x="3" y="3" width="18" height="18" rx="1"/><circle cx="12" cy="12" r="4"/></svg>
+          Replace with image
+        </div>
+      </div>
+      <div class="portfolio-overlay">
+        <div class="overlay-content">
+          <p class="p-tag">Football</p>
+          <p class="p-name">Friday Night Lights</p>
+          <p class="p-date">Oct 2024</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="portfolio-item" data-category="basketball">
+      <div class="aspect">
+        <div class="p-placeholder">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><rect x="3" y="3" width="18" height="18" rx="1"/><circle cx="12" cy="12" r="4"/></svg>
+          Replace with image
+        </div>
+      </div>
+      <div class="portfolio-overlay">
+        <div class="overlay-content">
+          <p class="p-tag">Basketball</p>
+          <p class="p-name">AAU Showcase</p>
+          <p class="p-date">Aug 2024</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="portfolio-item" data-category="video">
+      <div class="aspect">
+        <div class="p-placeholder">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          Video — Replace with thumbnail
+        </div>
+      </div>
+      <div class="portfolio-overlay">
+        <div class="overlay-content">
+          <p class="p-tag">Video</p>
+          <p class="p-name">Season Highlights Reel</p>
+          <p class="p-date">2024</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="portfolio-item" data-category="baseball">
+      <div class="aspect">
+        <div class="p-placeholder">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><rect x="3" y="3" width="18" height="18" rx="1"/><circle cx="12" cy="12" r="4"/></svg>
+          Replace with image
+        </div>
+      </div>
+      <div class="portfolio-overlay">
+        <div class="overlay-content">
+          <p class="p-tag">Baseball</p>
+          <p class="p-name">Travel Ball Tournament</p>
+          <p class="p-date">Jul 2024</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="portfolio-item" data-category="soccer">
+      <div class="aspect">
+        <div class="p-placeholder">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><rect x="3" y="3" width="18" height="18" rx="1"/><circle cx="12" cy="12" r="4"/></svg>
+          Replace with image
+        </div>
+      </div>
+      <div class="portfolio-overlay">
+        <div class="overlay-content">
+          <p class="p-tag">Soccer</p>
+          <p class="p-name">Regional Cup</p>
+          <p class="p-date">Jun 2024</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="portfolio-item" data-category="video">
+      <div class="aspect">
+        <div class="p-placeholder">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          Video — Replace with thumbnail
+        </div>
+      </div>
+      <div class="portfolio-overlay">
+        <div class="overlay-content">
+          <p class="p-tag">Video</p>
+          <p class="p-name">Player Promo Video</p>
+          <p class="p-date">May 2024</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="portfolio-item" data-category="football">
+      <div class="aspect">
+        <div class="p-placeholder">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><rect x="3" y="3" width="18" height="18" rx="1"/><circle cx="12" cy="12" r="4"/></svg>
+          Replace with image
+        </div>
+      </div>
+      <div class="portfolio-overlay">
+        <div class="overlay-content">
+          <p class="p-tag">Football</p>
+          <p class="p-name">Playoff Run</p>
+          <p class="p-date">Nov 2024</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="portfolio-item" data-category="basketball">
+      <div class="aspect">
+        <div class="p-placeholder">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><rect x="3" y="3" width="18" height="18" rx="1"/><circle cx="12" cy="12" r="4"/></svg>
+          Replace with image
+        </div>
+      </div>
+      <div class="portfolio-overlay">
+        <div class="overlay-content">
+          <p class="p-tag">Basketball</p>
+          <p class="p-name">Pro Training Camp</p>
+          <p class="p-date">Sep 2024</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="portfolio-item" data-category="baseball">
+      <div class="aspect">
+        <div class="p-placeholder">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><rect x="3" y="3" width="18" height="18" rx="1"/><circle cx="12" cy="12" r="4"/></svg>
+          Replace with image
+        </div>
+      </div>
+      <div class="portfolio-overlay">
+        <div class="overlay-content">
+          <p class="p-tag">Baseball</p>
+          <p class="p-name">Little League Nationals</p>
+          <p class="p-date">Aug 2024</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="portfolio-item" data-category="video">
+      <div class="aspect">
+        <div class="p-placeholder">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          Video — Replace with thumbnail
+        </div>
+      </div>
+      <div class="portfolio-overlay">
+        <div class="overlay-content">
+          <p class="p-tag">Video</p>
+          <p class="p-name">Team Documentary</p>
+          <p class="p-date">2024</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <footer>
+    <div class="footer-logo">SB<span>T</span></div>
+    <p class="footer-copy">© 2025 Shots By Tej. All rights reserved.</p>
+  </footer>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SERVICES PAGE
+══════════════════════════════════════════ -->
+<div class="page" id="services">
+  <div class="page-header">
+    <div class="page-header-inner">
+      <p class="page-eyebrow">What We Offer</p>
+      <h1 class="page-title">Services<span class="page-title-italic">& Packages</span></h1>
+    </div>
+  </div>
+
+  <div class="services-intro" style="max-width:1600px; padding: 80px 40px 60px;">
+    <div>
+      <p class="page-eyebrow">About SBT</p>
+      <h2 style="font-family:'Bebas Neue',sans-serif; font-size: clamp(32px,4vw,48px); letter-spacing:3px; margin-top:16px; line-height:1.1;">
+        Capturing Every<br>Defining Moment
+      </h2>
+    </div>
+    <p class="services-intro-text">
+      Shots By Tej delivers high-quality sports photography and videography tailored for athletes, teams, and organizations. From youth leagues to professional events — every frame tells a story.
+    </p>
+  </div>
+
+  <div class="services-grid" style="max-width:1600px; margin:0 auto;">
+
+    <div class="service-card reveal">
+      <span class="service-number">01</span>
+      <svg class="service-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
+        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+        <circle cx="12" cy="13" r="4"/>
+      </svg>
+      <h3 class="service-name">Sports Photography</h3>
+      <p class="service-desc">High-resolution action shots capturing the intensity, emotion, and peak moments of any sporting event.</p>
+      <ul class="service-includes">
+        <li>Full game or event coverage</li>
+        <li>Edited high-res digital gallery</li>
+        <li>Same-week delivery</li>
+        <li>Print-ready files included</li>
+        <li>Online gallery sharing link</li>
+      </ul>
+    </div>
+
+    <div class="service-card reveal">
+      <span class="service-number">02</span>
+      <svg class="service-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
+        <polygon points="23 7 16 12 23 17 23 7"/>
+        <rect x="1" y="5" width="15" height="14" rx="2"/>
+      </svg>
+      <h3 class="service-name">Sports Videography</h3>
+      <p class="service-desc">Cinematic game film and highlight reels that showcase your team or player at their absolute best.</p>
+      <ul class="service-includes">
+        <li>Full HD / 4K game film</li>
+        <li>Highlight reel editing</li>
+        <li>Color grading & sound design</li>
+        <li>Social-ready cuts (Reels/TikTok)</li>
+        <li>Downloadable MP4 delivery</li>
+      </ul>
+    </div>
+
+    <div class="service-card reveal">
+      <span class="service-number">03</span>
+      <svg class="service-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
+        <circle cx="12" cy="12" r="10"/>
+        <polyline points="12 6 12 12 16 14"/>
+      </svg>
+      <h3 class="service-name">Player Profiles</h3>
+      <p class="service-desc">Dedicated photo + video sessions designed to build an athlete's personal brand and recruiting profile.</p>
+      <ul class="service-includes">
+        <li>1-on-1 portrait session</li>
+        <li>Action & lifestyle shots</li>
+        <li>30-second promo video</li>
+        <li>Social media asset pack</li>
+        <li>Recruiting-ready deliverables</li>
+      </ul>
+    </div>
+
+    <div class="service-card reveal">
+      <span class="service-number">04</span>
+      <svg class="service-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
+        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+        <circle cx="9" cy="7" r="4"/>
+        <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+        <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+      </svg>
+      <h3 class="service-name">Team Coverage</h3>
+      <p class="service-desc">Seasonal or multi-event packages for teams who want consistent, professional coverage all year long.</p>
+      <ul class="service-includes">
+        <li>Season-long contracts available</li>
+        <li>Home & away coverage</li>
+        <li>Team photo day included</li>
+        <li>Priority scheduling</li>
+        <li>Discounted bulk pricing</li>
+      </ul>
+    </div>
+
+    <div class="service-card reveal">
+      <span class="service-number">05</span>
+      <svg class="service-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+        <polyline points="14 2 14 8 20 8"/>
+        <line x1="12" y1="18" x2="12" y2="12"/>
+        <line x1="9" y1="15" x2="15" y2="15"/>
+      </svg>
+      <h3 class="service-name">Tournament Coverage</h3>
+      <p class="service-desc">Multi-day, multi-team event coverage for tournaments, showcases, and championship events.</p>
+      <ul class="service-includes">
+        <li>All-day on-site presence</li>
+        <li>Multiple games per day</li>
+        <li>Per-team gallery delivery</li>
+        <li>Event recap video</li>
+        <li>Organizer licensing rights</li>
+      </ul>
+    </div>
+
+    <div class="service-card reveal">
+      <span class="service-number">06</span>
+      <svg class="service-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
+        <rect x="2" y="3" width="20" height="14" rx="2"/>
+        <line x1="8" y1="21" x2="16" y2="21"/>
+        <line x1="12" y1="17" x2="12" y2="21"/>
+      </svg>
+      <h3 class="service-name">Social Media Content</h3>
+      <p class="service-desc">Purpose-built photo and video content optimized for Instagram, TikTok, and Twitter/X engagement.</p>
+      <ul class="service-includes">
+        <li>Vertical & square crops</li>
+        <li>Branded graphic overlays</li>
+        <li>Stories & Reels edits</li>
+        <li>Caption copy included</li>
+        <li>Posted content rights</li>
+      </ul>
+    </div>
+
+  </div>
+
+  <div class="pricing-section">
+    <h2>Starting Rates</h2>
+    <div class="pricing-table">
+      <div class="pricing-card reveal">
+        <p class="price-tier">Essential</p>
+        <p class="price-amount"><span>$</span>150</p>
+        <p class="price-note">per event</p>
+        <ul class="price-features">
+          <li><span class="check">—</span> Up to 2 hours</li>
+          <li><span class="check">—</span> 50+ edited photos</li>
+          <li><span class="check">—</span> Online gallery</li>
+          <li><span class="check">—</span> 5-day turnaround</li>
+        </ul>
+      </div>
+      <div class="pricing-card featured reveal">
+        <p class="price-tier">Pro</p>
+        <p class="price-amount"><span>$</span>300</p>
+        <p class="price-note">per event</p>
+        <ul class="price-features">
+          <li><span class="check">—</span> Full event coverage</li>
+          <li><span class="check">—</span> 150+ edited photos</li>
+          <li><span class="check">—</span> Highlight video reel</li>
+          <li><span class="check">—</span> 3-day turnaround</li>
+          <li><span class="check">—</span> Social media cuts</li>
+        </ul>
+      </div>
+      <div class="pricing-card reveal">
+        <p class="price-tier">Elite</p>
+        <p class="price-amount"><span>$</span>500</p>
+        <p class="price-note">per event</p>
+        <ul class="price-features">
+          <li><span class="check">—</span> Photo + 4K video</li>
+          <li><span class="check">—</span> Unlimited edits</li>
+          <li><span class="check">—</span> Same-day preview</li>
+          <li><span class="check">—</span> 48-hr full delivery</li>
+          <li><span class="check">—</span> Player promo video</li>
+        </ul>
+      </div>
+      <div class="pricing-card reveal">
+        <p class="price-tier">Season</p>
+        <p class="price-amount"><span>$</span>Custom</p>
+        <p class="price-note">contact for quote</p>
+        <ul class="price-features">
+          <li><span class="check">—</span> Full season coverage</li>
+          <li><span class="check">—</span> Discounted rates</li>
+          <li><span class="check">—</span> Priority booking</li>
+          <li><span class="check">—</span> Team + player content</li>
+          <li><span class="check">—</span> End-of-season film</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <div class="footer-logo">SB<span>T</span></div>
+    <p class="footer-copy">© 2025 Shots By Tej. All rights reserved.</p>
+  </footer>
+</div>
+
+<!-- ══════════════════════════════════════════
+     CONTACT PAGE
+══════════════════════════════════════════ -->
+<div class="page" id="contact">
+  <div class="contact-layout">
+    <div class="contact-info">
+      <div class="contact-info-top">
+        <p class="page-eyebrow">Get In Touch</p>
+        <h2 class="contact-tagline">Let's Tell Your<br><span>Story</span> Together</h2>
+        <p style="font-size:14px; color:var(--gray); line-height:1.8; max-width:380px; margin-bottom:48px;">
+          Whether it's a single game or an entire season, SBT is ready to capture every moment that matters. Reach out to discuss your project.
+        </p>
+
+        <div class="contact-detail">
+          <svg class="contact-detail-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+          <div>
+            <p class="contact-detail-label">Email</p>
+            <p class="contact-detail-value">shotsbytej@email.com</p>
+          </div>
+        </div>
+
+        <div class="contact-detail">
+          <svg class="contact-detail-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.4 2 2 0 0 1 3.6 1h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+          <div>
+            <p class="contact-detail-label">Phone</p>
+            <p class="contact-detail-value">(555) 000-0000</p>
+          </div>
+        </div>
+
+        <div class="contact-detail">
+          <svg class="contact-detail-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          <div>
+            <p class="contact-detail-label">Based In</p>
+            <p class="contact-detail-value">Your City, State</p>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <p style="font-size:10px; letter-spacing:2px; text-transform:uppercase; color:var(--gray); margin-bottom:16px;">Follow Along</p>
+        <div class="contact-social">
+          <a href="#" class="social-link">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+          </a>
+          <a href="#" class="social-link">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22.54 6.42a2.78 2.78 0 0 0-1.95-1.96C18.88 4 12 4 12 4s-6.88 0-8.59.46a2.78 2.78 0 0 0-1.95 1.96A29 29 0 0 0 1 12a29 29 0 0 0 .46 5.58A2.78 2.78 0 0 0 3.41 19.6C5.12 20 12 20 12 20s6.88 0 8.59-.4a2.78 2.78 0 0 0 1.95-1.95A29 29 0 0 0 23 12a29 29 0 0 0-.46-5.58z"/><polygon points="9.75 15.02 15.5 12 9.75 8.98 9.75 15.02"/></svg>
+          </a>
+          <a href="#" class="social-link">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg>
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <div class="contact-form-area">
+      <p class="form-section-title">Send a Message</p>
+      <div class="form-row">
+        <div class="form-group">
+          <label>First Name</label>
+          <input type="text" placeholder="John">
+        </div>
+        <div class="form-group">
+          <label>Last Name</label>
+          <input type="text" placeholder="Smith">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Email Address</label>
+        <input type="email" placeholder="john@example.com">
+      </div>
+      <div class="form-group">
+        <label>Service Interested In</label>
+        <select>
+          <option value="" disabled selected>Select a service</option>
+          <option>Sports Photography</option>
+          <option>Sports Videography</option>
+          <option>Player Profile Session</option>
+          <option>Team Coverage</option>
+          <option>Tournament Coverage</option>
+          <option>Social Media Content</option>
+          <option>Season Package</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Sport / Event Type</label>
+          <input type="text" placeholder="e.g. Basketball, Soccer...">
+        </div>
+        <div class="form-group">
+          <label>Event Date</label>
+          <input type="text" placeholder="MM/DD/YYYY">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Message</label>
+        <textarea placeholder="Tell me about your event, team, or project..."></textarea>
+      </div>
+      <button class="btn-submit" id="contact-submit">
+        Send Message
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════
+let currentPage = 'home';
+
+function navigate(page) {
+  if (page === currentPage) return;
+  currentPage = page;
+
+  document.querySelectorAll('.page').forEach(p => {
+    p.classList.remove('active', 'page-enter');
+  });
+
+  const target = document.getElementById(page);
+  target.classList.add('active');
+  void target.offsetWidth; // force reflow for animation
+  target.classList.add('page-enter');
+
+  window.scrollTo(0, 0);
+
+  // Update active nav link highlight
+  document.querySelectorAll('.nav-links a[data-page], .nav-logo[data-page]').forEach(a => {
+    a.classList.toggle('active', a.dataset.page === page);
+  });
+
+  if (page === 'home') initCanvas();
+  initReveal();
+}
+
+// Attach nav clicks via JS (no inline handlers — works on GitHub Pages)
+document.querySelectorAll('[data-page]').forEach(el => {
+  el.style.cursor = 'pointer';
+  el.addEventListener('click', function(e) {
+    e.preventDefault();
+    const pg = this.dataset.page;
+    if (pg) {
+      navigate(pg);
+      // close mobile menu if open
+      document.getElementById('mobile-menu').classList.remove('open');
+    }
+  });
+});
+
+// Hamburger
+document.getElementById('hamburger').addEventListener('click', () => {
+  document.getElementById('mobile-menu').classList.toggle('open');
+});
+document.getElementById('mobile-close-btn').addEventListener('click', () => {
+  document.getElementById('mobile-menu').classList.remove('open');
+});
+
+// Portfolio filter buttons
+document.querySelectorAll('.filter-btn').forEach(btn => {
+  btn.addEventListener('click', function() {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    this.classList.add('active');
+    const cat = this.dataset.filter;
+    document.querySelectorAll('.portfolio-item').forEach(item => {
+      item.style.display = (cat === 'all' || item.dataset.category === cat) ? '' : 'none';
+    });
+  });
+});
+
+// Contact submit
+document.getElementById('contact-submit').addEventListener('click', function() {
+  this.innerHTML = '✓&nbsp; Message Sent!';
+  this.style.background = '#2a7d4f';
+  this.style.color = '#fff';
+  setTimeout(() => {
+    this.innerHTML = 'Send Message <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>';
+    this.style.background = '';
+    this.style.color = '';
+  }, 3000);
+});
+
+// Scroll nav background
+window.addEventListener('scroll', () => {
+  document.getElementById('main-nav').classList.toggle('scrolled', window.scrollY > 20);
+});
+
+// Set initial active link
+document.querySelector('.nav-links a[data-page="home"]').classList.add('active');
+
+// ═══════════════════════════════════════
+// CUSTOM CURSOR
+// ═══════════════════════════════════════
+const cursor = document.getElementById('cursor');
+const ring   = document.getElementById('cursor-ring');
+let rx = 0, ry = 0, mx = window.innerWidth / 2, my = window.innerHeight / 2;
+
+document.addEventListener('mousemove', e => {
+  mx = e.clientX; my = e.clientY;
+  cursor.style.left = mx + 'px';
+  cursor.style.top  = my + 'px';
+});
+
+(function animRing() {
+  rx += (mx - rx) * 0.12;
+  ry += (my - ry) * 0.12;
+  ring.style.left = rx + 'px';
+  ring.style.top  = ry + 'px';
+  requestAnimationFrame(animRing);
+})();
+
+if ('ontouchstart' in window) {
+  cursor.style.display = 'none';
+  ring.style.display   = 'none';
+  document.body.style.cursor = 'auto';
+}
+
+// ═══════════════════════════════════════
+// HOME — DRAGGABLE PHOTOS
+// ═══════════════════════════════════════
+const photos = [
+  { w: 260, h: 180, label: 'Basketball Coverage',   cat: 'Basketball' },
+  { w: 200, h: 260, label: 'Player Portrait',        cat: 'Portrait'   },
+  { w: 230, h: 170, label: 'Soccer Action',          cat: 'Soccer'     },
+  { w: 180, h: 240, label: 'Football Friday Night',  cat: 'Football'   },
+  { w: 280, h: 190, label: 'Tournament Highlight',   cat: 'Tournament' },
+  { w: 210, h: 160, label: 'Baseball Travel Ball',   cat: 'Baseball'   },
+  { w: 160, h: 220, label: 'Youth League',           cat: 'Youth'      },
+];
+
+// Single shared mouse/touch state — no duplicate window listeners
+let dragTarget = null;
+let dragOX = 0, dragOY = 0, dragLastX = 0, dragVel = 0;
+let dragBaseRot = 0, dragCurrentRot = 0;
+
+window.addEventListener('mousemove', e => {
+  if (!dragTarget) return;
+  dragVel = e.clientX - dragLastX;
+  dragLastX = e.clientX;
+  dragCurrentRot = dragBaseRot + dragVel * 0.6;
+  dragTarget.style.left      = (e.clientX - dragOX) + 'px';
+  dragTarget.style.top       = (e.clientY - dragOY) + 'px';
+  dragTarget.style.transform = `rotate(${dragCurrentRot}deg) scale(1.05)`;
+  dragTarget.style.transition = 'box-shadow .2s, transform .05s';
+});
+
+window.addEventListener('mouseup', endDrag);
+
+window.addEventListener('touchmove', e => {
+  if (!dragTarget) return;
+  e.preventDefault();
+  const t = e.touches[0];
+  dragVel = t.clientX - dragLastX;
+  dragLastX = t.clientX;
+  dragCurrentRot = dragBaseRot + dragVel * 0.6;
+  dragTarget.style.left      = (t.clientX - dragOX) + 'px';
+  dragTarget.style.top       = (t.clientY - dragOY) + 'px';
+  dragTarget.style.transform = `rotate(${dragCurrentRot}deg) scale(1.05)`;
+  dragTarget.style.transition = 'box-shadow .2s, transform .05s';
+}, { passive: false });
+
+window.addEventListener('touchend', endDrag);
+
+function endDrag() {
+  if (!dragTarget) return;
+  dragTarget.style.transform  = `rotate(${dragCurrentRot}deg) scale(1)`;
+  dragTarget.style.transition = 'box-shadow .3s, transform .4s cubic-bezier(.2,0,.1,1)';
+  dragTarget.style.zIndex     = '';
+  dragTarget = null;
+}
+
+let zCounter = 10;
+
+function makeDraggable(el, baseRot) {
+  el.addEventListener('mousedown', e => {
+    e.preventDefault();
+    dragTarget     = el;
+    dragBaseRot    = baseRot;
+    dragCurrentRot = baseRot;
+    dragLastX      = e.clientX;
+    dragVel        = 0;
+    // offset = cursor position relative to element's top-left
+    const rect = el.getBoundingClientRect();
+    dragOX = e.clientX - rect.left;
+    dragOY = e.clientY - rect.top;
+    el.style.zIndex     = ++zCounter;
+    el.style.transition = 'box-shadow .2s';
+  });
+
+  el.addEventListener('touchstart', e => {
+    e.preventDefault();
+    const t = e.touches[0];
+    dragTarget     = el;
+    dragBaseRot    = baseRot;
+    dragCurrentRot = baseRot;
+    dragLastX      = t.clientX;
+    dragVel        = 0;
+    const rect = el.getBoundingClientRect();
+    dragOX = t.clientX - rect.left;
+    dragOY = t.clientY - rect.top;
+    el.style.zIndex     = ++zCounter;
+    el.style.transition = 'box-shadow .2s';
+  }, { passive: false });
+}
+
+// Only inject the keyframe style once
+let floatStyleInjected = false;
+
+function initCanvas() {
+  const canvas = document.getElementById('photo-canvas');
+  canvas.innerHTML = '';
+
+  const W = window.innerWidth, H = window.innerHeight;
+
+  const positions = [
+    { x: W * 0.04, y: H * 0.10 },
+    { x: W * 0.72, y: H * 0.06 },
+    { x: W * 0.78, y: H * 0.55 },
+    { x: W * 0.02, y: H * 0.55 },
+    { x: W * 0.30, y: H * 0.72 },
+    { x: W * 0.58, y: H * 0.68 },
+    { x: W * 0.15, y: H * 0.28 },
+  ];
+
+  const rotations = [-8, 6, -4, 9, -6, 3, -10];
+
+  if (!floatStyleInjected) {
+    const s = document.createElement('style');
+    s.textContent = `@keyframes floatIn { from { opacity:0; transform:scale(.85) translateY(28px); } to { opacity:1; } }`;
+    document.head.appendChild(s);
+    floatStyleInjected = true;
+  }
+
+  photos.forEach((p, i) => {
+    const el = document.createElement('div');
+    el.className = 'draggable-photo';
+    el.style.width      = p.w + 'px';
+    el.style.height     = p.h + 'px';
+    el.style.left       = positions[i].x + 'px';
+    el.style.top        = positions[i].y + 'px';
+    el.style.transform  = `rotate(${rotations[i]}deg)`;
+    el.style.zIndex     = i + 1;
+    el.style.animation  = `floatIn .7s ${i * 0.1}s both`;
+
+    el.innerHTML = `
+      <div class="photo-placeholder" style="width:100%;height:100%;">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+          <rect x="3" y="3" width="18" height="18" rx="1"/>
+          <circle cx="12" cy="12" r="4"/>
+          <path d="M3 12h4M17 12h4M12 3v4M12 17v4"/>
+        </svg>
+        <span style="font-size:9px;color:var(--gray);">${p.cat}</span>
+      </div>
+      <div class="photo-label">${p.label}</div>
+    `;
+
+    canvas.appendChild(el);       // append FIRST so getBoundingClientRect works
+    makeDraggable(el, rotations[i]);
+  });
+}
+
+// ═══════════════════════════════════════
+// SCROLL REVEAL
+// ═══════════════════════════════════════
+function initReveal() {
+  const obs = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target); }
+    });
+  }, { threshold: 0.1 });
+  document.querySelectorAll('.reveal').forEach(el => {
+    el.classList.remove('visible');
+    obs.observe(el);
+  });
+}
+
+// ═══════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════
+initCanvas();
+initReveal();
+window.addEventListener('resize', () => { if (currentPage === 'home') initCanvas(); });
+</script>
+</body>
+</html>
