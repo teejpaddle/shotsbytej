@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Packages — Shots By Tej</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&family=Playfair+Display:ital@1&display=swap" rel="stylesheet">
+<style>
+  :root{--black:#080808;--white:#f5f2ee;--gold:#c9a84c;--gold-light:#e8c97a;--gray:#888880;--dark-gray:#1a1a18;--nav-h:72px;}
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  html{scroll-behavior:smooth;}
+  body{background:var(--black);color:var(--white);font-family:'DM Sans',sans-serif;font-weight:300;overflow-x:hidden;cursor:none;}
+
+  #cursor{position:fixed;width:10px;height:10px;background:var(--gold);border-radius:50%;pointer-events:none;z-index:9999;transform:translate(-50%,-50%);transition:width .2s,height .2s;mix-blend-mode:difference;}
+  #cursor-ring{position:fixed;width:36px;height:36px;border:1px solid rgba(201,168,76,.5);border-radius:50%;pointer-events:none;z-index:9998;transform:translate(-50%,-50%);}
+  body:has(a:hover) #cursor,body:has(button:hover) #cursor{width:20px;height:20px;}
+
+  nav{position:fixed;top:0;left:0;right:0;height:var(--nav-h);display:flex;align-items:center;justify-content:space-between;padding:0 40px;z-index:1000;background:rgba(8,8,8,.92);backdrop-filter:blur(12px);}
+  .nav-logo{font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:4px;color:var(--white);text-decoration:none;}
+  .nav-logo span{color:var(--gold);}
+  .nav-links{display:flex;gap:36px;list-style:none;}
+  .nav-links a{text-decoration:none;color:var(--white);font-size:13px;letter-spacing:2px;text-transform:uppercase;opacity:.7;transition:opacity .2s,color .2s;position:relative;}
+  .nav-links a::after{content:'';position:absolute;bottom:-4px;left:0;width:0;height:1px;background:var(--gold);transition:width .3s;}
+  .nav-links a:hover{opacity:1;color:var(--gold);}
+  .nav-links a:hover::after{width:100%;}
+  .nav-hamburger{display:none;flex-direction:column;gap:5px;cursor:pointer;padding:4px;}
+  .nav-hamburger span{display:block;width:24px;height:1px;background:var(--white);}
+
+  .mobile-menu{display:none;position:fixed;inset:0;background:var(--black);z-index:999;flex-direction:column;align-items:center;justify-content:center;gap:40px;}
+  .mobile-menu.open{display:flex;}
+  .mobile-menu a{font-family:'Bebas Neue',sans-serif;font-size:48px;letter-spacing:6px;color:var(--white);text-decoration:none;transition:color .2s;}
+  .mobile-menu a:hover{color:var(--gold);}
+  .mobile-close{position:absolute;top:28px;right:40px;font-size:32px;color:var(--gray);cursor:pointer;background:none;border:none;}
+
+  /* Page header */
+  .page-header{padding:calc(var(--nav-h) + 60px) 40px 60px;border-bottom:1px solid rgba(255,255,255,.06);}
+  .page-header-inner{max-width:1400px;margin:0 auto;display:flex;align-items:flex-end;justify-content:space-between;gap:40px;flex-wrap:wrap;}
+  .page-eyebrow{font-size:11px;letter-spacing:4px;text-transform:uppercase;color:var(--gold);margin-bottom:16px;}
+  .page-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(48px,8vw,96px);letter-spacing:4px;line-height:1;}
+  .page-title-italic{font-family:'Playfair Display',serif;font-style:italic;font-size:clamp(32px,5vw,64px);color:var(--gold);margin-left:12px;}
+  .page-header-note{font-size:13px;color:var(--gray);line-height:1.7;max-width:380px;}
+
+  /* Section dividers */
+  .section-label{
+    max-width:1400px;margin:0 auto;
+    padding:60px 40px 32px;
+    display:flex;align-items:center;gap:24px;
+  }
+  .section-label-text{
+    font-family:'Bebas Neue',sans-serif;
+    font-size:clamp(28px,4vw,48px);
+    letter-spacing:5px;
+    white-space:nowrap;
+  }
+  .section-label-line{flex:1;height:1px;background:rgba(255,255,255,.08);}
+  .section-label-icon{color:var(--gold);flex-shrink:0;}
+
+  /* Package grid */
+  .package-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(320px,1fr));
+    gap:1px;
+    background:rgba(255,255,255,.05);
+    max-width:1400px;
+    margin:0 auto;
+  }
+
+  /* Package card */
+  .pkg-card{
+    background:var(--black);
+    padding:48px 40px;
+    position:relative;
+    overflow:hidden;
+    transition:background .3s;
+    display:flex;
+    flex-direction:column;
+  }
+  .pkg-card::before{content:'';position:absolute;top:0;left:0;width:0;height:2px;background:var(--gold);transition:width .5s;}
+  .pkg-card:hover{background:#0d0d0b;}
+  .pkg-card:hover::before{width:100%;}
+
+  .pkg-card.featured{
+    background:rgba(201,168,76,.04);
+    border:1px solid rgba(201,168,76,.2);
+  }
+  .pkg-card.featured::after{
+    content:'Most Popular';
+    position:absolute;top:0;right:32px;
+    background:var(--gold);color:var(--black);
+    font-size:9px;letter-spacing:2px;text-transform:uppercase;
+    padding:4px 14px;
+  }
+  .pkg-card.custom-card{
+    background:var(--dark-gray);
+    grid-column:1/-1;
+    flex-direction:row;
+    align-items:center;
+    justify-content:space-between;
+    gap:40px;
+    flex-wrap:wrap;
+  }
+  .pkg-card.custom-card::before{height:0;}
+
+  .pkg-num{
+    font-family:'Bebas Neue',sans-serif;
+    font-size:72px;
+    color:rgba(255,255,255,.04);
+    line-height:1;
+    position:absolute;top:20px;right:24px;
+    letter-spacing:2px;
+    pointer-events:none;
+  }
+
+  .pkg-name{
+    font-family:'Bebas Neue',sans-serif;
+    font-size:clamp(22px,2.5vw,30px);
+    letter-spacing:3px;
+    margin-bottom:8px;
+    line-height:1.1;
+  }
+  .pkg-price{
+    font-family:'Bebas Neue',sans-serif;
+    font-size:clamp(36px,4vw,52px);
+    color:var(--gold);
+    letter-spacing:2px;
+    margin-bottom:28px;
+    line-height:1;
+  }
+  .pkg-price sup{font-size:60%;vertical-align:super;letter-spacing:1px;}
+
+  .pkg-divider{width:32px;height:1px;background:var(--gold);margin-bottom:28px;opacity:.6;}
+
+  .pkg-features{list-style:none;flex:1;}
+  .pkg-features li{
+    font-size:13px;
+    color:rgba(255,255,255,.6);
+    padding:9px 0;
+    border-bottom:1px solid rgba(255,255,255,.05);
+    display:flex;align-items:flex-start;gap:12px;
+    line-height:1.5;
+  }
+  .pkg-features li::before{
+    content:'';display:block;
+    width:16px;height:1px;
+    background:var(--gold);
+    flex-shrink:0;margin-top:8px;
+  }
+
+  /* Custom package */
+  .custom-left{}
+  .custom-right{flex-shrink:0;}
+  .custom-starting{font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--gold);margin-bottom:8px;}
+  .custom-price{font-family:'Bebas Neue',sans-serif;font-size:clamp(32px,4vw,52px);letter-spacing:3px;line-height:1;margin-bottom:16px;}
+  .custom-desc{font-size:14px;color:var(--gray);line-height:1.8;max-width:600px;}
+
+  .btn-gold{
+    display:inline-flex;align-items:center;gap:14px;
+    padding:16px 36px;
+    background:var(--gold);color:var(--black);
+    font-family:'DM Sans',sans-serif;font-size:11px;letter-spacing:3px;text-transform:uppercase;
+    text-decoration:none;border:none;cursor:pointer;
+    transition:background .3s,transform .2s;font-weight:500;
+    white-space:nowrap;
+  }
+  .btn-gold:hover{background:var(--gold-light);transform:translateX(4px);}
+  .btn-gold svg{transition:transform .2s;}
+  .btn-gold:hover svg{transform:translateX(4px);}
+
+  /* Disclaimer */
+  .disclaimer{
+    max-width:1400px;margin:0 auto;
+    padding:48px 40px 80px;
+    border-top:1px solid rgba(255,255,255,.06);
+  }
+  .disclaimer p{
+    font-size:12px;color:var(--gray);line-height:1.9;
+    border-left:2px solid rgba(201,168,76,.3);
+    padding-left:20px;
+    font-style:italic;
+  }
+
+  /* CTA */
+  .cta-section{
+    max-width:1400px;margin:0 auto;
+    padding:60px 40px;
+    display:flex;align-items:center;justify-content:space-between;
+    gap:40px;flex-wrap:wrap;
+    border-top:1px solid rgba(255,255,255,.06);
+  }
+  .cta-left h2{font-family:'Bebas Neue',sans-serif;font-size:clamp(28px,4vw,52px);letter-spacing:4px;line-height:1.05;margin-bottom:10px;}
+  .cta-left h2 span{color:var(--gold);font-family:'Playfair Display',serif;font-style:italic;}
+  .cta-left p{font-size:14px;color:var(--gray);max-width:400px;line-height:1.8;}
+
+  footer{padding:40px;border-top:1px solid rgba(255,255,255,.06);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:20px;}
+  .footer-logo{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:4px;color:var(--white);}
+  .footer-logo span{color:var(--gold);}
+  .footer-copy{font-size:11px;color:var(--gray);letter-spacing:1.5px;}
+
+  .grain{position:fixed;inset:0;pointer-events:none;z-index:9990;opacity:.04;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");background-size:200px;}
+
+  .reveal{opacity:0;transform:translateY(30px);transition:opacity .7s ease,transform .7s ease;}
+  .reveal.visible{opacity:1;transform:translateY(0);}
+
+  @media(max-width:900px){
+    nav{padding:0 24px;}.nav-links{display:none;}.nav-hamburger{display:flex;}
+    .page-header{padding:calc(var(--nav-h)+40px) 24px 40px;}
+    .section-label{padding:48px 24px 24px;}
+    .pkg-card{padding:36px 28px;}
+    .pkg-card.custom-card{flex-direction:column;align-items:flex-start;}
+    .cta-section{padding:48px 24px;}
+    .disclaimer{padding:40px 24px 60px;}
+    footer{padding:28px 24px;}
+  }
+  @media(max-width:600px){
+    .package-grid{grid-template-columns:1fr;}
+    .page-header-inner{flex-direction:column;align-items:flex-start;}
+    footer{padding:28px 20px;}
+  }
+</style>
+</head>
+<body>
+<div class="grain"></div>
+<div id="cursor"></div>
+<div id="cursor-ring"></div>
+
+<nav>
+  <a class="nav-logo" href="../index.html">SB<span>T</span></a>
+  <ul class="nav-links">
+    <li><a href="../index.html">Home</a></li>
+    <li><a href="portfolio.html">Portfolio</a></li>
+    <li><a href="services.html">Services</a></li>
+    <li><a href="contact.html">Contact</a></li>
+  </ul>
+  <div class="nav-hamburger" id="hamburger"><span></span><span></span><span></span></div>
+</nav>
+
+<div class="mobile-menu" id="mobile-menu">
+  <button class="mobile-close" id="mob-close">✕</button>
+  <a href="../index.html">Home</a>
+  <a href="portfolio.html">Portfolio</a>
+  <a href="services.html">Services</a>
+  <a href="contact.html">Contact</a>
+</div>
+
+<!-- Header -->
+<div class="page-header reveal">
+  <div class="page-header-inner">
+    <div>
+      <p class="page-eyebrow">Pricing</p>
+      <h1 class="page-title">Packages<span class="page-title-italic">&amp; Rates</span></h1>
+    </div>
+    <p class="page-header-note">Every package is fully customizable. Pricing may vary based on scope, scheduling, and travel. Contact for a custom quote.</p>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════
+     PHOTOGRAPHY PACKAGES
+══════════════════════════════════ -->
+<div class="section-label reveal">
+  <svg class="section-label-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+  <span class="section-label-text">Photography Packages</span>
+  <div class="section-label-line"></div>
+</div>
+
+<div class="package-grid">
+
+  <!-- Game Day -->
+  <div class="pkg-card reveal">
+    <span class="pkg-num">01</span>
+    <h3 class="pkg-name">Game Day</h3>
+    <p class="pkg-price"><sup>$</sup>600</p>
+    <div class="pkg-divider"></div>
+    <ul class="pkg-features">
+      <li>1 full game coverage (2 hours)</li>
+      <li>100–150 edited photos</li>
+      <li>Balanced coverage — team, individuals &amp; moments</li>
+      <li>Digital delivery</li>
+    </ul>
+  </div>
+
+  <!-- Basic Tournament -->
+  <div class="pkg-card reveal">
+    <span class="pkg-num">02</span>
+    <h3 class="pkg-name">Basic Tournament Coverage</h3>
+    <p class="pkg-price"><sup>$</sup>900</p>
+    <div class="pkg-divider"></div>
+    <ul class="pkg-features">
+      <li>2 full games coverage (3 hours)</li>
+      <li>175–250 edited images</li>
+      <li>Balanced coverage — team, individuals &amp; moments</li>
+      <li>Digital delivery</li>
+    </ul>
+  </div>
+
+  <!-- Full Tournament -->
+  <div class="pkg-card reveal">
+    <span class="pkg-num">03</span>
+    <h3 class="pkg-name">Full Tournament Coverage</h3>
+    <p class="pkg-price"><sup>$</sup>1,200</p>
+    <div class="pkg-divider"></div>
+    <ul class="pkg-features">
+      <li>3 full games coverage (4–5 hours)</li>
+      <li>250–300 edited images</li>
+      <li>Balanced coverage — team, individuals &amp; moments</li>
+      <li>Digital delivery</li>
+    </ul>
+  </div>
+
+  <!-- Team Media Day -->
+  <div class="pkg-card reveal">
+    <span class="pkg-num">04</span>
+    <h3 class="pkg-name">Team Media Day</h3>
+    <p class="pkg-price"><sup>$</sup>1,200</p>
+    <div class="pkg-divider"></div>
+    <ul class="pkg-features">
+      <li>2–3 hour shoot</li>
+      <li>Individual player portraits</li>
+      <li>Team photos</li>
+      <li>150–250 edited images</li>
+      <li>Branded gallery</li>
+      <li>Digital delivery</li>
+    </ul>
+  </div>
+
+  <!-- Season Photo Package -->
+  <div class="pkg-card featured reveal">
+    <span class="pkg-num">05</span>
+    <h3 class="pkg-name">Season Photo Package</h3>
+    <p class="pkg-price"><sup>$</sup>3,000 <span style="font-size:40%;color:var(--gray);letter-spacing:1px;">– $5,500</span></p>
+    <div class="pkg-divider"></div>
+    <ul class="pkg-features">
+      <li>5–7 games covered</li>
+      <li>Full media day included</li>
+      <li>600–1,000 edited images</li>
+      <li>Branded galleries per game</li>
+      <li>Digital delivery</li>
+    </ul>
+  </div>
+
+</div>
+
+<!-- ══════════════════════════════════
+     VIDEOGRAPHY PACKAGES
+══════════════════════════════════ -->
+<div class="section-label reveal">
+  <svg class="section-label-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
+  <span class="section-label-text">Videography Packages</span>
+  <div class="section-label-line"></div>
+</div>
+
+<div class="package-grid">
+
+  <!-- Game Hype -->
+  <div class="pkg-card reveal">
+    <span class="pkg-num">01</span>
+    <h3 class="pkg-name">Game Hype</h3>
+    <p class="pkg-price"><sup>$</sup>800</p>
+    <div class="pkg-divider"></div>
+    <ul class="pkg-features">
+      <li>1 full game coverage (2 hours)</li>
+      <li>1-minute highlight video</li>
+      <li>1–2 reels (10–30 seconds) for social media</li>
+      <li>Team coverage</li>
+      <li>Music + cinematic edits</li>
+      <li>Digital delivery</li>
+    </ul>
+  </div>
+
+  <!-- Tournament Hype -->
+  <div class="pkg-card reveal">
+    <span class="pkg-num">02</span>
+    <h3 class="pkg-name">Tournament Hype</h3>
+    <p class="pkg-price"><sup>$</sup>1,200</p>
+    <div class="pkg-divider"></div>
+    <ul class="pkg-features">
+      <li>2 full games coverage (3 hours)</li>
+      <li>2-minute highlight reel</li>
+      <li>4–6 reels (10–30 seconds) for social media</li>
+      <li>Team coverage</li>
+      <li>Music + cinematic edits</li>
+      <li>Digital delivery</li>
+    </ul>
+  </div>
+
+  <!-- Full Tournament Hype -->
+  <div class="pkg-card reveal">
+    <span class="pkg-num">03</span>
+    <h3 class="pkg-name">Full Tournament Hype</h3>
+    <p class="pkg-price"><sup>$</sup>1,600</p>
+    <div class="pkg-divider"></div>
+    <ul class="pkg-features">
+      <li>3 full games coverage (4–5 hours)</li>
+      <li>2-minute highlight reel</li>
+      <li>4–6 reels (10–30 seconds) for social media</li>
+      <li>Team coverage</li>
+      <li>Music + cinematic edits</li>
+      <li>Digital delivery</li>
+    </ul>
+  </div>
+
+  <!-- About Us Package -->
+  <div class="pkg-card reveal">
+    <span class="pkg-num">04</span>
+    <h3 class="pkg-name">About Us Package</h3>
+    <p class="pkg-price"><sup>$</sup>1,800 <span style="font-size:40%;color:var(--gray);letter-spacing:1px;">– $3,500</span></p>
+    <div class="pkg-divider"></div>
+    <ul class="pkg-features">
+      <li>Strategy call with coaches/directors</li>
+      <li>Brand positioning — culture, values, mission</li>
+      <li>Script outline + interview question planning</li>
+      <li>6 hours of filming</li>
+      <li>1–3 minute cinematic "About Us" film</li>
+      <li>30–45 second short version for social media</li>
+      <li>Subtitles included for all formats</li>
+      <li>Music + cinematic edits</li>
+      <li>Digital delivery</li>
+    </ul>
+  </div>
+
+  <!-- Season Video Package -->
+  <div class="pkg-card featured reveal">
+    <span class="pkg-num">05</span>
+    <h3 class="pkg-name">Season Video Package</h3>
+    <p class="pkg-price"><sup>$</sup>4,000 <span style="font-size:40%;color:var(--gray);letter-spacing:1px;">– $7,500</span></p>
+    <div class="pkg-divider"></div>
+    <ul class="pkg-features">
+      <li>5–7 games covered</li>
+      <li>Multiple highlight videos throughout season</li>
+      <li>4–6 minute cinematic season film</li>
+      <li>Interviews — players &amp; coaches</li>
+      <li>Team coverage throughout</li>
+      <li>Music + cinematic edits</li>
+      <li>Digital delivery</li>
+    </ul>
+  </div>
+
+</div>
+
+<!-- ══════════════════════════════════
+     CUSTOM PACKAGE
+══════════════════════════════════ -->
+<div class="section-label reveal">
+  <svg class="section-label-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+  <span class="section-label-text">Custom Package</span>
+  <div class="section-label-line"></div>
+</div>
+
+<div class="package-grid" style="margin-bottom:0;">
+  <div class="pkg-card custom-card reveal">
+    <div class="custom-left">
+      <p class="custom-starting">Built For Your Program</p>
+      <p class="custom-price">Starting at $1,000+</p>
+      <p class="custom-desc">A fully tailored photo/video solution designed around your program's specific goals — whether that's recruiting, social media growth, tournament coverage, or long-term brand development. Fully custom pricing.</p>
+    </div>
+    <div class="custom-right">
+      <a class="btn-gold" href="contact.html">
+        Get a Custom Quote
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- Disclaimer -->
+<div class="disclaimer reveal">
+  <p>All pricing is flexible and may vary based on the specific scope of the project, creative requirements, scheduling, and availability. Packages are fully customizable and can be restructured or repriced to best align with your program's needs and goals. Travel and accommodation costs, if applicable, are not included in the listed pricing and will be quoted separately.</p>
+</div>
+
+<!-- CTA -->
+<div class="cta-section reveal">
+  <div class="cta-left">
+    <h2>Ready to Book?<br><span>Let's Talk.</span></h2>
+    <p>Every project is unique. Reach out and I'll put together a package tailored to your event, team, or season.</p>
+  </div>
+  <a class="btn-gold" href="contact.html">
+    Contact Me
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+  </a>
+</div>
+
+<footer>
+  <div class="footer-logo">SB<span>T</span></div>
+  <p class="footer-copy">© 2025 Shots By Tej. All rights reserved.</p>
+</footer>
+
+<script>
+const cur=document.getElementById('cursor'),ring=document.getElementById('cursor-ring');
+let rx=0,ry=0,mx=window.innerWidth/2,my=window.innerHeight/2;
+document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;cur.style.left=mx+'px';cur.style.top=my+'px';});
+(function a(){rx+=(mx-rx)*.12;ry+=(my-ry)*.12;ring.style.left=rx+'px';ring.style.top=ry+'px';requestAnimationFrame(a);})();
+if('ontouchstart'in window){cur.style.display='none';ring.style.display='none';document.body.style.cursor='auto';}
+
+document.getElementById('hamburger').addEventListener('click',()=>document.getElementById('mobile-menu').classList.toggle('open'));
+document.getElementById('mob-close').addEventListener('click',()=>document.getElementById('mobile-menu').classList.remove('open'));
+
+const obs=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('visible');obs.unobserve(e.target);}});},{threshold:.1});
+document.querySelectorAll('.reveal').forEach(el=>obs.observe(el));
+</script>
+</body>
+</html>
